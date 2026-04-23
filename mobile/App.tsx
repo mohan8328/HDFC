@@ -1,12 +1,15 @@
 import { useMemo, useState, useCallback, useEffect } from 'react'
 import {
   ActivityIndicator,
+  Alert,
   Platform,
   StatusBar,
   StyleSheet,
   Text,
   View,
 } from 'react-native'
+import * as FileSystem from 'expo-file-system/legacy'
+import * as Sharing from 'expo-sharing'
 import { WebView } from 'react-native-webview'
 import { StatusBar as ExpoStatusBar } from 'expo-status-bar'
 
@@ -55,6 +58,43 @@ export default function App() {
     [webHost, finishBootLoading],
   )
 
+  const onBridgeMessage = useCallback(async (event: { nativeEvent: { data: string } }) => {
+    let msg: { type?: string; filename?: string; mime?: string; data?: string; message?: string }
+    try {
+      msg = JSON.parse(event.nativeEvent.data) as typeof msg
+    } catch {
+      return
+    }
+    if (msg.type === 'DOWNLOAD_BLOB_ERROR') {
+      Alert.alert('Statement download', msg.message ?? 'Something went wrong.')
+      return
+    }
+    if (msg.type !== 'DOWNLOAD_BLOB' || !msg.data || !msg.filename) return
+    const baseDir = FileSystem.cacheDirectory
+    if (!baseDir) {
+      Alert.alert('Statement download', 'App cache is not available on this device.')
+      return
+    }
+    const safe = msg.filename.replace(/[^\w.-]+/g, '_')
+    const path = `${baseDir}hdfc-${Date.now()}-${safe}`
+    try {
+      await FileSystem.writeAsStringAsync(path, msg.data, {
+        encoding: FileSystem.EncodingType.Base64,
+      })
+      if (await Sharing.isAvailableAsync()) {
+        await Sharing.shareAsync(path, {
+          mimeType: msg.mime ?? 'application/pdf',
+          dialogTitle: 'Save or open statement',
+        })
+      } else {
+        Alert.alert('Statement saved', path)
+      }
+    } catch (e) {
+      const err = e instanceof Error ? e.message : 'Unknown error'
+      Alert.alert('Statement download', err)
+    }
+  }, [])
+
   if (showPlaceholder) {
     return (
       <View style={styles.center}>
@@ -85,6 +125,7 @@ export default function App() {
         onError={finishBootLoading}
         onHttpError={finishBootLoading}
         onNavigationStateChange={onNavigationStateChange}
+        onMessage={onBridgeMessage}
         allowsBackForwardNavigationGestures
         setSupportMultipleWindows={false}
         originWhitelist={['*']}

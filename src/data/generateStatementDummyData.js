@@ -109,6 +109,10 @@ const SOURCES = ['hdfc', 'hdfc', 'hdfc', 'other', 'upi', 'union']
 /** Typical BMTC UPI fares (₹). */
 const BMTC_FARES = [6, 23, 23, 28, 28, 40, 40, 40, 60, 90]
 
+/** April only: higher BMTC fares (₹23→40, ₹40→80); month total debits normalized to ~₹4500 below. */
+const BMTC_FARES_APRIL = [6, 40, 40, 28, 28, 80, 80, 80, 60, 90]
+const APRIL_DEBIT_TARGET_INR = 4500
+
 /** Small peer / shop amounts (₹). */
 const SMALL_AMOUNTS = [10, 10, 20, 20, 20, 28, 36, 40, 50]
 
@@ -178,10 +182,14 @@ export function generateTransactionsForRange(fromDate, toDate) {
     const effStart = first < start ? start : first
     const effEnd = last > end ? end : last
     if (effStart <= effEnd) {
+      const rowsBeforeMonth = rows.length
       const rng = mulberry32(hashString(`${fromDate}|${toDate}|${ym}`))
       const effDays =
         Math.floor((effEnd.getTime() - effStart.getTime()) / 86400000) + 1
-      const nTotal = targetTxCountForMonth(lastD, effDays)
+      let nTotal = targetTxCountForMonth(lastD, effDays)
+      if (mo === 4) {
+        nTotal = Math.round(nTotal * 1.22)
+      }
 
       const nZepto = Math.max(1, Math.min(4, Math.round(nTotal * 0.075)))
       const nOtherSmall = Math.max(2, Math.min(8, Math.round(nTotal * 0.1)))
@@ -204,7 +212,8 @@ export function generateTransactionsForRange(fromDate, toDate) {
         if (ymd < fromDate || ymd > toDate) continue
 
         if (kind === 'bmtc') {
-          const amt = BMTC_FARES[Math.floor(rng() * BMTC_FARES.length)]
+          const fares = mo === 4 ? BMTC_FARES_APRIL : BMTC_FARES
+          const amt = fares[Math.floor(rng() * fares.length)]
           rows.push(
             row({
               date: ymd,
@@ -243,6 +252,20 @@ export function generateTransactionsForRange(fromDate, toDate) {
               paymentSource: SOURCES[Math.floor(rng() * SOURCES.length)],
             }),
           )
+        }
+      }
+
+      if (mo === 4) {
+        const monthSlice = rows.slice(rowsBeforeMonth)
+        let sum = 0
+        for (const r of monthSlice) sum += r.withdrawal ?? 0
+        if (sum > 0) {
+          const factor = APRIL_DEBIT_TARGET_INR / sum
+          for (const r of monthSlice) {
+            if (r.withdrawal && r.withdrawal > 0) {
+              r.withdrawal = Math.max(1, Math.round(r.withdrawal * factor))
+            }
+          }
         }
       }
     }
