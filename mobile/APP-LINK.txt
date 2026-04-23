@@ -1,0 +1,12 @@
+=== APPLICATION LINK (use this) ===
+
+Open or share this in any browser (phone or laptop):
+
+   https://hdfc-eight.vercel.app
+
+That is your full app. No Expo, no APK, no install step required.
+
+Optional — pin to phone home screen (Chrome on Android):
+   Open the link → tap ⋮ menu → "Install app" or "Add to Home screen".
+
+If your Vercel URL changes, replace the line above with your new deployment URL.

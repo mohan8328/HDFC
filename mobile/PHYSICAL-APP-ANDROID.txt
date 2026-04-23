@@ -1,0 +1,71 @@
+A “physical” Android app = an .APK file you install on the phone (icon on home screen, opens full screen).
+This project uses Expo to wrap your live site: https://hdfc-eight.vercel.app
+
+You do NOT need EAS on your PC. Build runs on GitHub (reliable network).
+
+
+=== STEP 0: Expo + GitHub — base directory must be "mobile" ===
+
+Your Expo app is in the repo folder  mobile/  (app.json, eas.json, package.json).
+
+On expo.dev → your project → GitHub / Project link to mohan8328/HDFC →
+"Base directory": set to
+
+   mobile
+
+Do NOT leave "/". Root makes Expo look for app.json in the wrong place.
+Save. (If Save is disabled, click the field, type  mobile , then save.)
+
+"EAS Workflows — Unconfigured" is optional. Our workflow is  .github/workflows/eas-android-apk.yml
+after you add Project ID + GitHub EXPO_TOKEN secret (below).
+
+
+=== STEP 1: Expo Project ID (one time) ===
+
+1) Open https://expo.dev  (logged in as mohansaireddy)
+2) Open your project (e.g. "hdfc")
+3) Project settings (gear) or sidebar → find "Project ID" (looks like: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx)
+4) Copy that UUID.
+
+Edit file:  mobile/app.json
+Inside the "expo" { ... } block, add a comma after the last property and paste:
+
+  "extra": {
+    "eas": {
+      "projectId": "PASTE-YOUR-UUID-HERE"
+    }
+  }
+
+Valid JSON: no trailing comma after the closing } of "expo".
+
+
+=== STEP 2: GitHub secret (one time) ===
+
+1) GitHub → your HDFC repository → Settings → Secrets and variables → Actions
+2) New repository secret
+   Name:  EXPO_TOKEN
+   Value: your Expo access token (expo.dev → Access tokens → create & copy)
+3) Save.
+
+Never commit the token in code or in chat.
+
+
+=== STEP 3: Push and run the build ===
+
+1) Commit and push:  app.json  +  .github/workflows/eas-android-apk.yml
+2) GitHub → tab "Actions" → workflow "Build Android APK (EAS)" → "Run workflow"
+3) Wait until it shows green (can take 15–30 minutes).
+4) Open the job log and search for:  https://expo.dev/artifacts/eas/
+   That is your DOWNLOAD link for the APK. Open it on the phone, download, install.
+
+On Android: Settings may ask to allow "Install unknown apps" for Chrome/Files — allow for this install.
+
+
+=== If something fails ===
+
+- Job error "Missing projectId" → Step 1 not saved correctly in app.json
+- Job error "EXPO_TOKEN" → Step 2 secret missing or misspelled name
+- Build failed on Expo → read red error in the EAS build page linked from the log
+
+=== iPhone (physical app) ===
+Requires a separate Apple / TestFlight / App Store process (not covered here). This repo is set up for Android APK first.

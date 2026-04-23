@@ -1,0 +1,97 @@
+Option B — get the .apk download link (run on YOUR PC, in order)
+
+If "unable to get local issuer certificate" on eas login — DO NOT keep fighting password login.
+
+--- FIX 1 (best): log in with your browser (Chrome uses Windows certs; Node often does not) ---
+
+   cd C:\Users\yerram\Desktop\HDFC\mobile
+   npx eas-cli login --browser
+
+Complete sign-in in the browser window. Then continue with step 3 below (eas init).
+
+
+--- If browser says success but CLI: "Something went wrong during authentication" ---
+
+The browser finished, but the CLI could not finish (callback blocked, old session, or SSL).
+
+Try in order:
+
+1) Use a token instead of any login command (most reliable on strict PCs):
+   Go to FIX 2 below — EXPO_TOKEN + whoami + init + eas:apk-link.
+
+2) Reset CLI session, then latest CLI, then browser again:
+   npx eas-cli@latest logout
+   Remove-Item "$env:USERPROFILE\.expo\state.json" -ErrorAction SilentlyContinue
+   cd C:\Users\yerram\Desktop\HDFC\mobile
+   npx eas-cli@latest login --browser
+
+3) When the browser opens, use the SAME default browser (Chrome/Edge), no private mode,
+   allow pop-ups; if Windows Firewall asks about Node, allow for private networks.
+
+4) Phone hotspot (no VPN) — corporate networks often break localhost callback.
+
+5) If whoami still fails with SSL after token is set, use the NODE_TLS_REJECT_UNAUTHORIZED
+   one-liner at the bottom of this file for that PowerShell window only, then whoami again.
+
+
+--- FIX 2: Personal Access Token (no eas login password at all) ---
+
+0) Clear bad environment variables (do this if you see warnings about company-root.pem
+   or NODE_TLS_REJECT_UNAUTHORIZED). You must NOT keep example paths from docs:
+
+   Remove-Item Env:NODE_EXTRA_CA_CERTS -ErrorAction SilentlyContinue
+   Remove-Item Env:NODE_TLS_REJECT_UNAUTHORIZED -ErrorAction SilentlyContinue
+
+   If those were set in Windows "Environment variables" (User or System), remove them there too:
+   Win+R → sysdm.cpl → Advanced → Environment variables → delete NODE_EXTRA_CA_CERTS and
+   NODE_TLS_REJECT_UNAUTHORIZED unless IT gave you a real .pem path.
+
+1) In normal Chrome, open: https://expo.dev/accounts/[your-account]/settings/access-tokens
+   (Or: expo.dev → avatar → Account settings → Access tokens → Create token)
+
+2) PowerShell — paste when prompted (avoids copying placeholder text by mistake):
+
+   cd C:\Users\yerram\Desktop\HDFC\mobile
+   $env:EXPO_TOKEN = Read-Host "Paste Expo access token from website"
+   npx eas-cli@latest whoami
+
+   If whoami says "bearer token is invalid", create a NEW token on expo.dev (old one may be revoked) and run Read-Host again.
+
+3) If whoami prints your account, skip "eas login" forever for this session. Run:
+   npx eas-cli init
+   npm run eas:apk-link
+
+4) Close PowerShell when done (clears EXPO_TOKEN). Next time, set EXPO_TOKEN again or use login --browser.
+
+
+--- Normal flow (only if login works) ---
+
+1) Open PowerShell or CMD and go to the mobile folder:
+   cd C:\Users\yerram\Desktop\HDFC\mobile
+
+2) Log in to Expo:
+   npx eas-cli login
+   (Prefer: npx eas-cli login --browser)
+
+3) Link this folder to an Expo project (first time only — follow prompts):
+   npx eas-cli init
+
+4) Start the Android build and WAIT until it finishes (then copy the https://expo.dev/artifacts/eas/....apk line):
+   npm run eas:apk-link
+
+   If the command ends before the build is done, open the "Build details" URL it printed,
+   wait for "Finished", then click Download and copy the .apk URL from the browser.
+
+Your site URL is already set for the "preview" build in eas.json (EXPO_PUBLIC_WEB_APP_URL).
+To use a different URL later, edit mobile/eas.json → build.preview.env.
+
+
+--- If --browser and EXPO_TOKEN still hit SSL on eas build / whoami ---
+
+Same TLS problem for all Node calls to Expo. Try: hotspot (no VPN), Node 20+ LTS,
+npm config delete cafile (if cafile was set), NODE_EXTRA_CA_CERTS with a company .pem from IT.
+
+Last resort for one session only:
+   $env:NODE_TLS_REJECT_UNAUTHORIZED="0"
+   npx eas-cli whoami
+   Remove-Item Env:NODE_TLS_REJECT_UNAUTHORIZED

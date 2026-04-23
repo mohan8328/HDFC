@@ -1,0 +1,37 @@
+{
+  "expo": {
+    "name": "HDFC Bank",
+    "slug": "hdfc-bank-demo",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/hdfc-icon.jpg",
+    "userInterfaceStyle": "dark",
+    "newArchEnabled": false,
+    "splash": {
+      "image": "./assets/hdfc-icon.jpg",
+      "resizeMode": "contain",
+      "backgroundColor": "#0f1118"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "in.bankdemo.hdfc"
+    },
+    "android": {
+      "package": "in.bankdemo.hdfc",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/hdfc-icon.jpg",
+        "backgroundColor": "#0c3358"
+      },
+      "edgeToEdgeEnabled": true,
+      "predictiveBackGestureEnabled": false
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "87e9d834-00fa-4f36-b03c-fb04195b64da"
+      }
+    }
+  }
+}
