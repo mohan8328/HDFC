@@ -1,4 +1,4 @@
-import { useMemo, useState, useCallback } from 'react'
+import { useMemo, useState, useCallback, useEffect } from 'react'
 import {
   ActivityIndicator,
   Platform,
@@ -25,6 +25,13 @@ function resolveWebAppUrl(): string {
 
 export default function App() {
   const uri = useMemo(() => resolveWebAppUrl(), [])
+  const webHost = useMemo(() => {
+    try {
+      return new URL(uri).hostname
+    } catch {
+      return ''
+    }
+  }, [uri])
   /** Only until first document load. SPA route changes can fire `onLoadStart` without `onLoadEnd`, which would leave a full-screen overlay and block taps. */
   const [bootLoading, setBootLoading] = useState(true)
   const showPlaceholder = !__DEV__ && uri === 'https://example.com'
@@ -32,6 +39,21 @@ export default function App() {
   const finishBootLoading = useCallback(() => {
     setBootLoading(false)
   }, [])
+
+  useEffect(() => {
+    const t = setTimeout(finishBootLoading, 15000)
+    return () => clearTimeout(t)
+  }, [finishBootLoading])
+
+  const onNavigationStateChange = useCallback(
+    (nav: { url?: string; loading?: boolean }) => {
+      if (nav.loading) return
+      const u = nav.url ?? ''
+      if (!u || u.startsWith('about:')) return
+      if (!webHost || u.includes(webHost)) finishBootLoading()
+    },
+    [webHost, finishBootLoading],
+  )
 
   if (showPlaceholder) {
     return (
@@ -61,6 +83,8 @@ export default function App() {
         style={styles.web}
         onLoadEnd={finishBootLoading}
         onError={finishBootLoading}
+        onHttpError={finishBootLoading}
+        onNavigationStateChange={onNavigationStateChange}
         allowsBackForwardNavigationGestures
         setSupportMultipleWindows={false}
         originWhitelist={['*']}

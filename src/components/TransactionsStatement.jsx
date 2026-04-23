@@ -12,7 +12,6 @@ import {
   ACCOUNT_NUMBER_MASKED,
 } from '../data/accountInfo'
 import { downloadBlob } from '../utils/downloadBlob'
-import { buildStatementPdfBlob } from '../utils/buildStatementPdf'
 import { transactionSortKey } from '../utils/transactionDisplay'
 import { sortChrono } from '../utils/statementLedger'
 import { PaymentHistoryList } from './PaymentHistoryList'
@@ -72,6 +71,7 @@ export function TransactionsStatement() {
     setLoadError(null)
     setBusy(true)
     try {
+      const { buildStatementPdfBlob } = await import('../utils/buildStatementPdf')
       const generatedAt = new Date().toLocaleString('en-IN', { hour12: true })
       const blob = await buildStatementPdfBlob({
         fromDate,
