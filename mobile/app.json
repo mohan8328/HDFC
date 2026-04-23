@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "HDFC Bank",
-    "slug": "hdfc-bank-demo",
+    "slug": "hdfc",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/hdfc-icon.jpg",
