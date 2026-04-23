@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useState, useCallback } from 'react'
 import {
   ActivityIndicator,
   Platform,
@@ -25,8 +25,13 @@ function resolveWebAppUrl(): string {
 
 export default function App() {
   const uri = useMemo(() => resolveWebAppUrl(), [])
-  const [loading, setLoading] = useState(true)
+  /** Only until first document load. SPA route changes can fire `onLoadStart` without `onLoadEnd`, which would leave a full-screen overlay and block taps. */
+  const [bootLoading, setBootLoading] = useState(true)
   const showPlaceholder = !__DEV__ && uri === 'https://example.com'
+
+  const finishBootLoading = useCallback(() => {
+    setBootLoading(false)
+  }, [])
 
   if (showPlaceholder) {
     return (
@@ -46,7 +51,7 @@ export default function App() {
     <View style={styles.root}>
       <ExpoStatusBar style="light" />
       <StatusBar barStyle="light-content" backgroundColor="#0c3358" />
-      {loading && (
+      {bootLoading && (
         <View style={styles.loader}>
           <ActivityIndicator size="large" color="#5ba3f5" />
         </View>
@@ -54,9 +59,8 @@ export default function App() {
       <WebView
         source={{ uri }}
         style={styles.web}
-        onLoadStart={() => setLoading(true)}
-        onLoadEnd={() => setLoading(false)}
-        onError={() => setLoading(false)}
+        onLoadEnd={finishBootLoading}
+        onError={finishBootLoading}
         allowsBackForwardNavigationGestures
         setSupportMultipleWindows={false}
         originWhitelist={['*']}
