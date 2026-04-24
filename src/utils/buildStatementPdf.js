@@ -106,31 +106,31 @@ export async function buildStatementPdfBlob({
     formatInrPdf(opening),
   ]
 
-  const body = [
-    openingRow,
-    ...withBal.map((r) => {
-      const dr = r.withdrawal > 0 ? r.withdrawal : 0
-      const cr = r.deposit > 0 ? r.deposit : 0
-      return [
-        r.date,
-        r.time ?? '—',
-        r.narration ?? r.merchant ?? '—',
-        r.refNo ?? '—',
-        r.category ?? r.memo ?? '—',
-        paymentSourceLabel(r.paymentSource),
-        fmtDrCr(dr),
-        fmtDrCr(cr),
-        formatInrPdf(r.balanceAfter),
-      ]
-    }),
-  ]
+  /** Newest first (end of period → start), like typical bank e-statements; running balances unchanged. */
+  const tableRows = [...withBal].reverse().map((r) => {
+    const dr = r.withdrawal > 0 ? r.withdrawal : 0
+    const cr = r.deposit > 0 ? r.deposit : 0
+    return [
+      r.date,
+      r.time ?? '—',
+      r.narration ?? r.merchant ?? '—',
+      r.refNo ?? '—',
+      r.category ?? r.memo ?? '—',
+      paymentSourceLabel(r.paymentSource),
+      fmtDrCr(dr),
+      fmtDrCr(cr),
+      formatInrPdf(r.balanceAfter),
+    ]
+  })
+
+  const body = [...tableRows, openingRow]
 
   const head = [
     [
       'Date',
       'Time (24h)',
-      'UPI description',
-      'UPI reference',
+      'Description',
+      'Reference',
       'Category',
       'Paid from',
       'Debit (Rs.)',

@@ -6,6 +6,7 @@ const CAT_TO_KEY = {
   Food: 'food',
   Shopping: 'shopping',
   'Money Transfer': 'moneyTransfer',
+  Salary: 'salary',
 }
 
 let _seq = 0
@@ -45,6 +46,7 @@ function row({
   paymentSource,
   refNo = null,
   deposit = null,
+  narration: narrationOverride = null,
 }) {
   _seq += 1
   const id = _seq
@@ -57,7 +59,7 @@ function row({
     valueDate: date,
     time,
     merchant,
-    narration: `UPI/${merchant}`,
+    narration: narrationOverride ?? `UPI/${merchant}`,
     refNo: ref,
     category,
     categoryKey,
@@ -66,6 +68,38 @@ function row({
     deposit: deposit != null && deposit > 0 ? deposit : null,
     balance: null,
     memo: category,
+  }
+}
+
+/** One-off NEFT credit (e.g. salary) — not included in April debit scaling. */
+function injectMsgGlobalNeftCredit(rows, fromDate, toDate) {
+  const start = new Date(fromDate)
+  const end = new Date(toDate)
+  if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime()) || start > end) return
+
+  const years = new Set()
+  for (let t = start.getTime(); t <= end.getTime(); t += 86400000) {
+    const d = new Date(t)
+    if (d.getMonth() === 3) years.add(d.getFullYear()) // April
+  }
+  const refBase = 5041289000000
+  for (const year of years) {
+    const ymd = `${year}-04-29`
+    if (ymd < fromDate || ymd > toDate) continue
+    _seq += 1
+    rows.push(
+      row({
+        date: ymd,
+        time: '15:30',
+        merchant: 'MSG Global Solutions India Private Limited',
+        amount: 0,
+        category: 'Salary',
+        paymentSource: 'neft',
+        refNo: `NEFTC${String(refBase + _seq).slice(0, 12)}`,
+        deposit: 120_000,
+        narration: 'NEFT/MSG Global Solutions India Private Limited — salary credit',
+      }),
+    )
   }
 }
 
@@ -277,6 +311,8 @@ export function generateTransactionsForRange(fromDate, toDate) {
       y += 1
     }
   }
+
+  injectMsgGlobalNeftCredit(rows, fromDate, toDate)
 
   return rows
 }

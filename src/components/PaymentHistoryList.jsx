@@ -66,10 +66,15 @@ export function PaymentHistoryList({ transactions }) {
                 </div>
                 <div className="phistory__amt-block">
                   <p className="phistory__amount">
-                    −{' '}
-                    {r.withdrawal != null && r.withdrawal > 0
-                      ? formatRupee(r.withdrawal)
-                      : '—'}
+                    {r.deposit != null && r.deposit > 0 ? (
+                      <>
+                        + {formatRupee(r.deposit)}
+                      </>
+                    ) : r.withdrawal != null && r.withdrawal > 0 ? (
+                      <>− {formatRupee(r.withdrawal)}</>
+                    ) : (
+                      '—'
+                    )}
                   </p>
                   <SourceLine source={r.paymentSource} />
                 </div>

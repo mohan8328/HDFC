@@ -9,7 +9,6 @@ import {
   View,
 } from 'react-native'
 import * as FileSystem from 'expo-file-system/legacy'
-import * as Sharing from 'expo-sharing'
 import { WebView } from 'react-native-webview'
 import { StatusBar as ExpoStatusBar } from 'expo-status-bar'
 
@@ -70,25 +69,33 @@ export default function App() {
       return
     }
     if (msg.type !== 'DOWNLOAD_BLOB' || !msg.data || !msg.filename) return
-    const baseDir = FileSystem.cacheDirectory
+    const baseDir = FileSystem.documentDirectory
     if (!baseDir) {
-      Alert.alert('Statement download', 'App cache is not available on this device.')
+      Alert.alert('Statement download', 'App storage is not available on this device.')
       return
     }
     const safe = msg.filename.replace(/[^\w.-]+/g, '_')
-    const path = `${baseDir}hdfc-${Date.now()}-${safe}`
+    const dir = `${baseDir}HDFCStatements/`
+    try {
+      const dirInfo = await FileSystem.getInfoAsync(dir)
+      if (!dirInfo.exists) {
+        await FileSystem.makeDirectoryAsync(dir, { intermediates: true })
+      }
+    } catch {
+      // makeDirectory or getInfo can fail; try write anyway
+    }
+    const path = `${dir}${Date.now()}-${safe}`
     try {
       await FileSystem.writeAsStringAsync(path, msg.data, {
         encoding: FileSystem.EncodingType.Base64,
       })
-      if (await Sharing.isAvailableAsync()) {
-        await Sharing.shareAsync(path, {
-          mimeType: msg.mime ?? 'application/pdf',
-          dialogTitle: 'Save or open statement',
-        })
-      } else {
-        Alert.alert('Statement saved', path)
-      }
+      Alert.alert(
+        'Statement downloaded',
+        Platform.OS === 'ios'
+          ? 'Open the Files app, then this app’s folder, to see your PDF.'
+          : 'Saved to this app’s storage. Open your Files / file manager, find this app, then the HDFCStatements folder.',
+        [{ text: 'OK' }],
+      )
     } catch (e) {
       const err = e instanceof Error ? e.message : 'Unknown error'
       Alert.alert('Statement download', err)

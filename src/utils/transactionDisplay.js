@@ -1,10 +1,11 @@
-/** @typedef {'hdfc' | 'other' | 'upi' | 'union'} PaymentSourceKey */
+/** @typedef {'hdfc' | 'other' | 'upi' | 'union' | 'neft'} PaymentSourceKey */
 
 const SOURCE_LABELS = {
   hdfc: 'HDFC Bank',
   other: 'Other bank',
   upi: 'UPI',
   union: 'Union Bank',
+  neft: 'NEFT',
 }
 
 export function paymentSourceLabel(key) {
