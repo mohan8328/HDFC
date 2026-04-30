@@ -104,8 +104,8 @@ function injectMsgGlobalNeftCredit(rows, fromDate, toDate) {
   }
 }
 
-/** Three BMTC trips on 28–30 Apr — after scaling. (Salary ₹52,186 is NEFT credit on 29 Apr.) */
-function injectAprilBmtcThreeDays(rows, fromDate, toDate) {
+/** BMTC trips on 28–29 Apr only (no BMTC on 30 Apr). Salary ₹52,186 is NEFT on 29 Apr. */
+function injectAprilBmtcDays(rows, fromDate, toDate) {
   const start = new Date(fromDate)
   const end = new Date(toDate)
   if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime()) || start > end) return
@@ -119,7 +119,6 @@ function injectAprilBmtcThreeDays(rows, fromDate, toDate) {
   const bmtcDays = [
     { day: 28, time: '09:15', amt: 28, suf: 'Ka51aj8572' },
     { day: 29, time: '08:40', amt: 40, suf: 'Ka57f2238' },
-    { day: 30, time: '07:55', amt: 23, suf: 'Ka57f0127' },
   ]
 
   for (const year of years) {
@@ -350,7 +349,7 @@ export function generateTransactionsForRange(fromDate, toDate) {
   }
 
   injectMsgGlobalNeftCredit(rows, fromDate, toDate)
-  injectAprilBmtcThreeDays(rows, fromDate, toDate)
+  injectAprilBmtcDays(rows, fromDate, toDate)
 
   return rows
 }
