@@ -1,0 +1,50 @@
+# Build APK on Expo EAS — runs on GitHub (avoids corporate SSL issues on local PC).
+#
+# Repo → Settings → Secrets and variables → Actions → New repository secret:
+#   Name:  EXPO_TOKEN
+#   Value: token from https://expo.dev/accounts/<you>/settings/access-tokens
+#
+# Then: Actions → "Build Android APK (EAS)" → Run workflow → Run workflow.
+
+name: Build Android APK (EAS)
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  eas-android-preview:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: mobile
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: mobile/package-lock.json
+
+      - name: Install dependencies (mobile/)
+        run: npm ci
+
+      - name: Verify EXPO_TOKEN
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+        run: |
+          if [ -z "${EXPO_TOKEN:-}" ]; then
+            echo "::error::Add repository secret EXPO_TOKEN (Expo → Access tokens)."
+            exit 1
+          fi
+
+      - name: EAS preview APK build
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+        run: npx eas-cli build --platform android --profile preview --non-interactive --wait
