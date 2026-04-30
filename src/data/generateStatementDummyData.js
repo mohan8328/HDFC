@@ -96,10 +96,47 @@ function injectMsgGlobalNeftCredit(rows, fromDate, toDate) {
         category: 'Salary',
         paymentSource: 'neft',
         refNo: `NEFTC${String(refBase + _seq).slice(0, 12)}`,
-        deposit: 120_000,
-        narration: 'NEFT/MSG Global Solutions India Private Limited — salary credit',
+        deposit: 52_186,
+        narration:
+          'NEFT CR — MSG Global Solutions India Private Limited / salary payment',
       }),
     )
+  }
+}
+
+/** Three BMTC trips on 28–30 Apr — after scaling. (Salary ₹52,186 is NEFT credit on 29 Apr.) */
+function injectAprilBmtcThreeDays(rows, fromDate, toDate) {
+  const start = new Date(fromDate)
+  const end = new Date(toDate)
+  if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime()) || start > end) return
+
+  const years = new Set()
+  for (let t = start.getTime(); t <= end.getTime(); t += 86400000) {
+    const d = new Date(t)
+    if (d.getMonth() === 3) years.add(d.getFullYear())
+  }
+
+  const bmtcDays = [
+    { day: 28, time: '09:15', amt: 28, suf: 'Ka51aj8572' },
+    { day: 29, time: '08:40', amt: 40, suf: 'Ka57f2238' },
+    { day: 30, time: '07:55', amt: 23, suf: 'Ka57f0127' },
+  ]
+
+  for (const year of years) {
+    for (const { day, time, amt, suf } of bmtcDays) {
+      const ymd = `${year}-04-${String(day).padStart(2, '0')}`
+      if (ymd < fromDate || ymd > toDate) continue
+      rows.push(
+        row({
+          date: ymd,
+          time,
+          merchant: `Bmtc Bus ${suf}`,
+          amount: amt,
+          category: 'Travel',
+          paymentSource: 'upi',
+        }),
+      )
+    }
   }
 }
 
@@ -313,6 +350,7 @@ export function generateTransactionsForRange(fromDate, toDate) {
   }
 
   injectMsgGlobalNeftCredit(rows, fromDate, toDate)
+  injectAprilBmtcThreeDays(rows, fromDate, toDate)
 
   return rows
 }

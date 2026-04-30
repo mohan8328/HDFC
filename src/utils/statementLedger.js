@@ -4,7 +4,8 @@ import { transactionSortKey } from './transactionDisplay'
  * Available balance shown on the home card (fixed demo figure).
  * Statement PDF opening balance is derived per ledger via {@link computeInitialOpeningForLedger}.
  */
-export const TARGET_CLOSING_BALANCE_INR = 423
+/** Demo ledger closing / available balance (aligned with MSG Global NEFT salary credit). */
+export const TARGET_CLOSING_BALANCE_INR = 52186
 
 function sumDebitsCredits(rows) {
   let dr = 0
