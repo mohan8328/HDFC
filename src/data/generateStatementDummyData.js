@@ -278,7 +278,14 @@ export function generateTransactionsForRange(fromDate, toDate) {
       }
 
       for (const { kind } of kinds) {
-        const ymd = dayPool[Math.floor(rng() * dayPool.length)]
+        let ymd
+        if (kind === 'bmtc' && mo === 4) {
+          const poolNoApr30 = dayPool.filter((d) => parseInt(String(d.split('-')[2]), 10) !== 30)
+          if (poolNoApr30.length === 0) continue
+          ymd = poolNoApr30[Math.floor(rng() * poolNoApr30.length)]
+        } else {
+          ymd = dayPool[Math.floor(rng() * dayPool.length)]
+        }
         if (ymd < fromDate || ymd > toDate) continue
 
         if (kind === 'bmtc') {
